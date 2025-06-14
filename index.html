@@ -1,750 +1,240 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kniffel Score Sheet</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 5px;
-            margin: 0;
-            box-sizing: border-box;
-            font-size: 0.9em;
-            overflow: hidden; /* Verhindert das Scrollen */
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #000;
-            text-align: center;
-            padding: 2px;
-            width: 33.33%;
-        }
-        .category {
-            text-align: left;
-            font-size: 0.9em;
-            text-transform: capitalize;
-        }
-        input[type=number], select, input[type=text], input[type=checkbox] {
-            box-sizing: border-box;
-            font-size: 0.9em;
-        }
-        select {
-            text-align: center;
-            text-align-last: center; /* For Firefox */
-        }
-        .result {
-            font-weight: bold;
-            text-align: center;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 20px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-        input:checked + .slider {
-            background-color: #2196F3;
-        }
-        input:checked + .slider:before {
-            transform: translateX(14px);
-        }
-        .slider.round {
-            border-radius: 34px;
-        }
-        .slider.round:before {
-            border-radius: 50%;
-        }
-        @media (max-width: 600px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
-            }
-            thead tr {
-                display: none;
-            }
-            tr {
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                margin-bottom: 0;
-                border: 1px solid #000;
-                padding: 2px;
-                background-color: #f9f9f9;
-            }
-            td {
-                border: none;
-                flex: 1;
-                padding: 2px;
-                text-align: left;
-            }
-            .category {
-                flex: 1;
-                font-weight: bold;
-            }
-            .checkbox-wrapper {
-                display: flex;
-                align-items: center;
-                flex: 1;
-            }
-            select, input[type=number] {
-                flex: 1;
-            }
-            .result, input[type=text] {
-                text-align: center;
-                font-weight: bold;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Kniffel • Mobile Scoreboard</title>
+
+<style>
+:root{
+  --bg:#f8f8f8;--card:#fff;--txt:#111;--accent:#0a84ff;--warn:#e53935;--brd:#ccccd0;
+  --rad:10px;--gap:.7rem;--sh:0 1px 4px rgba(0,0,0,.08);font-size:16px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1e;--card:#2c2c2e;--txt:#f2f2f7;--brd:#3a3a3c;--sh:0 1px 6px rgba(0,0,0,.6);}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+     background:var(--bg);color:var(--txt);
+     padding:env(safe-area-inset-top) .75rem env(safe-area-inset-bottom);}
+
+/* ---------- Setup ---------- */
+#setup{max-width:340px;margin:5rem auto 0;text-align:center;display:flex;flex-direction:column;gap:var(--gap);}
+#setup h2{font-size:1.35rem;}
+select,button{font-size:1rem;padding:.65rem .9rem;border-radius:var(--rad);border:1px solid var(--brd);}
+button{background:var(--accent);color:#fff;border:none;font-weight:600;cursor:pointer;box-shadow:var(--sh);}
+button:active{transform:scale(.97);}
+
+/* ---------- Scoreboard ---------- */
+#score-area{display:none;margin-top:var(--gap);}
+#controls{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:var(--gap);}
+#controls button{background:none;border:1px solid var(--brd);border-radius:var(--rad);padding:.45rem .7rem;
+                 color:var(--accent);font-weight:600;font-size:.9rem;flex:1 1 170px;}
+
+.wrapper{overflow-x:auto;border:1px solid var(--brd);border-radius:var(--rad);background:var(--card);box-shadow:var(--sh);}
+table{border-collapse:collapse;min-width:520px;width:100%;}
+th,td{border-bottom:1px solid var(--brd);text-align:center;padding:.45rem .4rem;}
+th:first-child,td:first-child{position:sticky;left:0;background:var(--card);text-align:left;font-weight:600;z-index:1;}
+th{position:sticky;top:0;background:var(--card);z-index:2;font-weight:700;}
+
+select{width:100%;padding:.35rem;border-radius:var(--rad);border:1px solid var(--brd);font-size:1rem;background:var(--card);}
+input[type=text]{width:100%;font-weight:600;border:none;background:transparent;text-align:center;font-size:1rem;}
+
+.switch{position:relative;display:inline-block;width:46px;height:26px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#d1d1d6;border-radius:26px;transition:.3s;}
+.slider:before{content:"";position:absolute;height:22px;width:22px;left:2px;top:2px;background:#fff;
+               border-radius:50%;transition:.3s;}
+.switch input:checked + .slider{background:var(--accent);}
+.switch input:checked + .slider:before{transform:translateX(20px);}
+
+.output{font-weight:600;font-size:1.05rem;}
+.need-bonus{color:var(--warn);}
+</style>
 </head>
+
 <body>
-    <table>
-        <tbody>
-            <tr>
-                <td></td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="text" id="player1-name" value="Spieler 1" class="result" style="width: 100%; box-sizing: border-box;">
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="text" id="player2-name" value="Spieler 2" class="result" style="width: 100%; box-sizing: border-box;">
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">1er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-1er-hide">
-                        <select id="lia-1er">
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-1er-hide">
-                        <select id="julian-1er">
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">2er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-2er-hide">
-                        <select id="lia-2er">
-                            <option value="0">0</option>
-                            <option value="2">2</option>
-                            <option value="4">4</option>
-                            <option value="6">6</option>
-                            <option value="8">8</option>
-                            <option value="10">10</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-2er-hide">
-                        <select id="julian-2er">
-                            <option value="0">0</option>
-                            <option value="2">2</option>
-                            <option value="4">4</option>
-                            <option value="6">6</option>
-                            <option value="8">8</option>
-                            <option value="10">10</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">3er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-3er-hide">
-                        <select id="lia-3er">
-                            <option value="0">0</option>
-                            <option value="3">3</option>
-                            <option value="6">6</option>
-                            <option value="9">9</option>
-                            <option value="12">12</option>
-                            <option value="15">15</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-3er-hide">
-                        <select id="julian-3er">
-                            <option value="0">0</option>
-                            <option value="3">3</option>
-                            <option value="6">6</option>
-                            <option value="9">9</option>
-                            <option value="12">12</option>
-                            <option value="15">15</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">4er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-4er-hide">
-                        <select id="lia-4er">
-                            <option value="0">0</option>
-                            <option value="4">4</option>
-                            <option value="8">8</option>
-                            <option value="12">12</option>
-                            <option value="16">16</option>
-                            <option value="20">20</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-4er-hide">
-                        <select id="julian-4er">
-                            <option value="0">0</option>
-                            <option value="4">4</option>
-                            <option value="8">8</option>
-                            <option value="12">12</option>
-                            <option value="16">16</option>
-                            <option value="20">20</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">5er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-5er-hide">
-                        <select id="lia-5er">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                            <option value="20">20</option>
-                            <option value="25">25</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-5er-hide">
-                        <select id="julian-5er">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                            <option value="20">20</option>
-                            <option value="25">25</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">6er</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-6er-hide">
-                        <select id="lia-6er">
-                            <option value="0">0</option>
-                            <option value="6">6</option>
-                            <option value="12">12</option>
-                            <option value="18">18</option>
-                            <option value="24">24</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-6er-hide">
-                        <select id="julian-6er">
-                            <option value="0">0</option>
-                            <option value="6">6</option>
-                            <option value="12">12</option>
-                            <option value="18">18</option>
-                            <option value="24">24</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Gesamt</td>
-                <td class="result"><span id="lia-gesamt">0</span></td>
-                <td class="result"><span id="julian-gesamt">0</span></td>
-            </tr>
-            <tr>
-                <td class="category">Bonus</td>
-                <td class="result">
-                    <span id="lia-bonus">0</span>
-                    <span id="lia-bonus-diff" style="font-weight: normal;"></span>
-                </td>
-                <td class="result">
-                    <span id="julian-bonus">0</span>
-                    <span id="julian-bonus-diff" style="font-weight: normal;"></span>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Gesamt Oben</td>
-                <td class="result"><span id="lia-gesamt-oben">0</span></td>
-                <td class="result"><span id="julian-gesamt-oben">0</span></td>
-            </tr>
-            <tr>
-                <td class="category">Dreierpasch</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-dreierpasch-hide">
-                        <select id="lia-dreierpasch">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-dreierpasch-hide">
-                        <select id="julian-dreierpasch">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Viererpasch</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-viererpasch-hide">
-                        <select id="lia-viererpasch">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-viererpasch-hide">
-                        <select id="julian-viererpasch">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Full House</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-fullhouse-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="lia-fullhouse" name="lia-fullhouse" value="25">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-fullhouse-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="julian-fullhouse" name="julian-fullhouse" value="25">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Kl. Straße</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-kleinestr-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="lia-kleinestr" name="lia-kleinestr" value="30">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-kleinestr-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="julian-kleinestr" name="julian-kleinestr" value="30">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Gr. Straße</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-grossestr-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="lia-grossestr" name="lia-grossestr" value="40">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-grossestr-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="julian-grossestr" name="julian-grossestr" value="40">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Kniffel</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-kniffel-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="lia-kniffel" name="lia-kniffel" value="50">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-kniffel-hide">
-                        <label class="switch" style="margin: 0 auto;">
-                            <input type="checkbox" id="julian-kniffel" name="julian-kniffel" value="50">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Chance</td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="lia-chance-hide">
-                        <select id="lia-chance">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-                <td>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="julian-chance-hide">
-                        <select id="julian-chance">
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="category">Gesamt Unten</td>
-                <td class="result"><span id="lia-gesamt-unten">0</span></td>
-                <td class="result"><span id="julian-gesamt-unten">0</span></td>
-            </tr>
-            <tr>
-                <td class="category">Gesamt Oben</td>
-                <td class="result"><span id="lia-gesamt-oben-2">0</span></td>
-                <td class="result"><span id="julian-gesamt-oben-2">0</span></td>
-            </tr>
-            <tr>
-                <td class="category">Endsumme</td>
-                <td class="result"><span id="lia-endsumme">0</span></td>
-                <td class="result"><span id="julian-endsumme">0</span></td>
-            </tr>
-        </tbody>
-    </table>
-    <script>
-        // Function to toggle visibility of elements and exclude from calculation
-        function toggleVisibilityAndCalculation(checkbox, element) {
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    element.style.display = 'none';
-                    element.dataset.ignore = 'true';
-                } else {
-                    element.style.display = 'block';
-                    element.dataset.ignore = 'false';
-                }
-                calculateTotals();
-            });
-        }
+<!-- ---------- 1) Start-Seite ---------- -->
+<div id="setup">
+  <h2>Wie viele Spieler?</h2>
+  <select id="player-select">
+    <option value="1">1 Spieler</option>
+    <option value="2" selected>2 Spieler</option>
+    <option value="3">3 Spieler</option>
+    <option value="4">4 Spieler</option>
+  </select>
+  <button id="start-btn">Start</button>
+</div>
 
-        // Function to calculate totals
-        function calculateTotals() {
-            const players = ['lia', 'julian'];
-            const upperCategories = ['1er', '2er', '3er', '4er', '5er', '6er'];
-            const lowerCategories = ['dreierpasch', 'viererpasch', 'fullhouse', 'kleinestr', 'grossestr', 'kniffel', 'chance'];
-            const upperSectionBonus = 63;
-            const upperSectionBonusPoints = 35;
+<!-- ---------- 2) Scoreboard ---------- -->
+<div id="score-area">
+  <div id="controls">
+    <button id="reset-all">Neu starten</button>
+    <button id="reset-scores">Neu starten (Spieler lassen)</button>
+  </div>
+  <div class="wrapper"><table id="score-table"></table></div>
+</div>
 
-            players.forEach(player => {
-                let upperTotal = 0;
-                let lowerTotal = 0;
+<script>
+/* ---------- Daten ---------- */
+const UPPER = [
+  {k:"1er",o:[0,1,2,3,4,5]},
+  {k:"2er",o:[0,2,4,6,8,10]},
+  {k:"3er",o:[0,3,6,9,12,15]},
+  {k:"4er",o:[0,4,8,12,16,20]},
+  {k:"5er",o:[0,5,10,15,20,25]},
+  {k:"6er",o:[0,6,12,18,24,30]}
+];
+const LOWER_SELECT = [
+  {k:"dreierpasch",l:"Dreierpasch"},
+  {k:"viererpasch",l:"Viererpasch"},
+  {k:"chance",     l:"Chance"}
+];
+const SWITCHES = [
+  {k:"fullhouse", l:"Full House",v:25},
+  {k:"kleinestr", l:"Kl. Straße",v:30},
+  {k:"grossestr", l:"Gr. Straße",v:40},
+  {k:"kniffel",   l:"Kniffel",   v:50}
+];
+const OUT = {
+  sumOben : {l:"Gesamt Oben"},
+  bonus   : {l:"Bonus"},
+  obenGes : {l:"Oben + Bonus"},
+  sumUnten: {l:"Gesamt Unten"},
+  endSum  : {l:"Endsumme"}
+};
 
-                // Calculate upper section total
-                upperCategories.forEach(category => {
-                    const element = document.getElementById(`${player}-${category}`);
-                    if (element.dataset.ignore !== 'true') {
-                        upperTotal += Number(element.value) || 0;
-                    }
-                });
+const LIMIT=63,BONUS=35,STORE="kniffelTable";
+let PLAYERS=0;
 
-                // Calculate bonus
-                let bonus = upperTotal >= upperSectionBonus ? upperSectionBonusPoints : 0;
-                let bonusDiff = upperTotal >= upperSectionBonus ? 0 : upperSectionBonus - upperTotal;
+/* ---------- Helper ---------- */
+const $ = q => document.querySelector(q);
+const $$ = q => document.querySelectorAll(q);
+function el(tag,attr={},...kids){
+  const n=document.createElement(tag);
+  for(const [k,v] of Object.entries(attr)){
+    if(k==="class") n.className=v;
+    else if(k in n) n[k]=v;
+    else n.setAttribute(k,v);
+  }
+  kids.forEach(c=>n.append(c));
+  return n;
+}
 
-                document.getElementById(`${player}-bonus`).textContent = bonus;
-                document.getElementById(`${player}-bonus-diff`).textContent = bonusDiff ? ` (${bonusDiff})` : '';
-                document.getElementById(`${player}-gesamt-oben`).textContent = upperTotal + bonus;
+/* ---------- Setup ---------- */
+$("#start-btn").onclick=()=>go(+$("#player-select").value);
+const old=load(); if(old) go(old.players,true,old.data);
 
-                // Calculate lower section total
-                lowerCategories.forEach(category => {
-                    const element = document.getElementById(`${player}-${category}`);
-                    if (element && element.dataset.ignore !== 'true') {
-                        if (category === 'fullhouse' || category === 'kleinestr' || category === 'grossestr' || category === 'kniffel') {
-                            lowerTotal += element.checked ? Number(element.value) : 0;
-                        } else {
-                            lowerTotal += Number(element.value) || 0;
-                        }
-                    }
-                });
+/* ---------- Tabelle aufbauen ---------- */
+function go(n,restore=false,data=null){
+  PLAYERS=n;
+  $("#setup").style.display="none";
+  build();
+  $("#score-area").style.display="block";
+  if(restore) apply(data);
+  calc();
+  save();
+}
+function build(){
+  const t=$("#score-table"); t.innerHTML="";
+  const head=el("tr",{},el("th",{},"Kategorie"));
+  for(let i=1;i<=PLAYERS;i++){
+    head.append(el("th",{},el("input",{type:"text",id:`p${i}-name`,value:`Spieler ${i}`,"data-save":"1"})));
+  }
+  t.append(head);
 
-                // Set totals
-                document.getElementById(`${player}-gesamt`).textContent = upperTotal;
-                document.getElementById(`${player}-gesamt-unten`).textContent = lowerTotal;
-                document.getElementById(`${player}-gesamt-oben-2`).textContent = upperTotal + bonus;
-                document.getElementById(`${player}-endsumme`).textContent = upperTotal + bonus + lowerTotal;
-            });
-        }
+  const addRow=(label,cb)=>{const r=el("tr",{});r.append(el("td",{},label));cb(r);t.append(r);};
+  UPPER.forEach(c=>addRow(c.k,r=>{
+    for(let i=1;i<=PLAYERS;i++){
+      const s=el("select",{id:`p${i}-${c.k}`,"data-save":"1"});c.o.forEach(v=>s.add(new Option(v,v)));
+      r.append(el("td",{},s));
+    }
+  }));
+  addOut(OUT.sumOben.l,"sumOben");
+  addOut(OUT.bonus.l,"bonus");
+  addOut(OUT.obenGes.l,"obenGes");
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add toggle visibility and calculation functionality for each row
-            const rows = [
-                '1er', '2er', '3er', '4er', '5er', '6er', 
-                'dreierpasch', 'viererpasch', 'fullhouse', 'kleinestr', 
-                'grossestr', 'kniffel', 'chance', 'gesamt-unten', 
-                'gesamt-oben-2', 'endsumme'
-            ];
-            rows.forEach(row => {
-                const liaCheckbox = document.getElementById(`lia-${row}-hide`);
-                const julianCheckbox = document.getElementById(`julian-${row}-hide`);
-                const liaElement = document.getElementById(`lia-${row}`);
-                const julianElement = document.getElementById(`julian-${row}`);
-                if (liaCheckbox && liaElement) {
-                    toggleVisibilityAndCalculation(liaCheckbox, liaElement);
-                }
-                if (julianCheckbox && julianElement) {
-                    toggleVisibilityAndCalculation(julianCheckbox, julianElement);
-                }
-            });
+  LOWER_SELECT.forEach(c=>addRow(c.l,r=>{
+    for(let i=1;i<=PLAYERS;i++){
+      const s=el("select",{id:`p${i}-${c.k}`,"data-save":"1"});
+      [...Array(31).keys()].forEach(v=>s.add(new Option(v,v))); r.append(el("td",{},s));
+    }
+  }));
+  SWITCHES.forEach(c=>addRow(c.l,r=>{
+    for(let i=1;i<=PLAYERS;i++){
+      const chk=el("input",{type:"checkbox",id:`p${i}-${c.k}`,value:c.v,"data-save":"1"});
+      r.append(el("td",{},el("label",{class:"switch"},chk,el("span",{class:"slider"}))));
+    }
+  }));
 
-            // Calculate totals initially
-            calculateTotals();
+  addOut(OUT.sumUnten.l,"sumUnten");
+  addOut(OUT.endSum.l,"endSum");
 
-            // Recalculate totals on input change
-            document.addEventListener('input', calculateTotals);
-        });
+  function addOut(label,key){addRow(label,r=>{
+    for(let i=1;i<=PLAYERS;i++) r.append(el("td",{},el("span",{id:`p${i}-${key}`,class:"output"},"0")));
+  });}
 
-        // Warn the user before leaving the page
-        window.addEventListener('beforeunload', function (e) {
-            e.preventDefault();
-            e.returnValue = 'Sind Sie sicher, dass Sie die Seite verlassen möchten? Nicht gespeicherte Daten gehen verloren!';
-        });
-    </script>
+  /* Listener */
+  $("#score-table").addEventListener("change",e=>{
+    if(e.target.matches("select, input[type=checkbox], input[type=text]")){ calc(); save(); }
+  });
+}
+
+/* ---------- Rechnen ---------- */
+function calc(){
+  for(let p=1;p<=PLAYERS;p++){
+    let up=0, low=0;
+    UPPER.forEach(c=>up+= +$("#p"+p+"-"+c.k).value||0);
+    LOWER_SELECT.forEach(c=>low+= +$("#p"+p+"-"+c.k).value||0);
+    SWITCHES.forEach(c=>$("#p"+p+"-"+c.k).checked && (low+=+c.v));
+
+    const diff=LIMIT-up, bonus=diff<=0?BONUS:0;
+    set(p,"sumOben",up);
+    const bonusCell=$("#p"+p+"-bonus");
+    if(diff>0){ bonusCell.textContent=diff; bonusCell.classList.add("need-bonus"); }
+    else      { bonusCell.textContent=bonus; bonusCell.classList.remove("need-bonus"); }
+    set(p,"obenGes",up+bonus);
+    set(p,"sumUnten",low);
+    set(p,"endSum",up+bonus+low);
+  }
+  function set(p,k,v){$("#p"+p+"-"+k).textContent=v;}
+}
+
+/* ---------- Speicher ---------- */
+function save(){
+  const o={players:PLAYERS,data:{}};
+  $$("[data-save]").forEach(el=>{
+    o.data[el.id]=el.type==="checkbox"?el.checked:el.value;
+  });
+  localStorage.setItem(STORE,JSON.stringify(o));
+}
+function load(){try{const d=JSON.parse(localStorage.getItem(STORE));return d&&d.players?d:null;}catch{return null;}}
+function apply(obj){for(const [id,v] of Object.entries(obj)){const el=$("#"+id); if(!el)continue;
+  el.type==="checkbox"?el.checked=v:el.value=v;}}
+/* ---------- Reset 1: komplett ---------- */
+$("#reset-all").onclick=()=>{
+  if(confirm("Alles löschen und Spieler neu wählen?")){
+    localStorage.removeItem(STORE);
+    location.reload();       // landet automatisch wieder im Setup
+  }
+};
+/* ---------- Reset 2: Punkte löschen ---------- */
+$("#reset-scores").onclick=()=>{
+  if(!confirm("Alle Ergebnisse löschen, Spieler behalten?")) return;
+
+  /* selects → 0 | checkboxes → false */
+  $$("[data-save]").forEach(el=>{
+    if(el.type==="checkbox" && el.id.includes("-name")===false){ el.checked=false; }
+    else if(el.tagName==="SELECT") { el.selectedIndex=0; }
+    /* Namen (input text) werden absichtlich ignoriert */
+  });
+  calc(); save();
+};
+
+/* Warnung vorm Verlassen */
+window.addEventListener("beforeunload",e=>{
+  e.preventDefault(); e.returnValue="Nicht gespeicherte Daten gehen verloren – Seite wirklich verlassen?";
+});
+</script>
 </body>
 </html>
